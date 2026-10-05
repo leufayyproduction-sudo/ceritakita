@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const client = createServerClient(url, key, {
       cookies: {
         getAll: () => request.cookies.getAll(),
-        setAll(values) {
+        setAll(values: { name: string; value: string; options: CookieOptions }[]) {
           values.forEach(({ name, value, options }) => {
             request.cookies.set(name, value);
             response.cookies.set(name, value, options);
