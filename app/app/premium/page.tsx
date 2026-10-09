@@ -9,7 +9,7 @@ export default async function PremiumPage() {
   const { supabase, user } = await authenticatedClient();
   const { error: expiryError } = await supabase.rpc("expire_my_orders");
   const [{ data: rows, error: planError }, { data: settings }, { data: orders, error: orderError }] = await Promise.all([
-    supabase.from("plans").select("id,name,price_idr,period,features,is_highlighted,sort").eq("is_active", true).order("sort").order("price_idr"),
+    supabase.from("plans").select("id,name,price_idr,period,features,is_highlighted,sort").eq("is_active", true).gt("price_idr", 0).in("period", ["monthly", "yearly"]).order("sort").order("price_idr"),
     supabase.from("payment_settings").select("qris_image_url,provider_label").eq("id", 1).maybeSingle(),
     supabase.from("orders").select("id,plan_id,plan_name,base_amount,unique_code,total_amount,status,expires_at,qris_image_url,merchant_name,instructions,note,proof_url").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
   ]);

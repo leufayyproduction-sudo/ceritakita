@@ -1,10 +1,10 @@
 begin;
 insert into public.plans(slug,name,price_idr,period,features,is_active) values
-('gratis','Gratis',0,'free',array['Cerita anonim','Mood harian','Jurnal privat','Edukasi publik'],true),
+('gratis','Gratis',0,'free',array['Cerita anonim','Mood harian','Jurnal privat','Edukasi publik'],false),
 ('plus','Plus',9000,'monthly',array['Mood tracker lanjutan','Riwayat tanpa batas'],true),
 ('premium','Premium',15000,'monthly',array['Semua fitur Plus','Insight mendalam','Konten premium'],true),
 ('pro','Pro',20000,'monthly',array['Semua fitur Premium','Rekomendasi personal','Konsultasi ahli terjadwal'],true)
-on conflict(slug) do update set name=excluded.name,price_idr=excluded.price_idr,period=excluded.period,features=excluded.features,is_active=true;
+on conflict(slug) do update set name=excluded.name,price_idr=excluded.price_idr,period=excluded.period,features=excluded.features,is_active=excluded.is_active;
 update public.plans set is_active=false where slug is null or slug not in ('gratis','plus','premium','pro');
 -- Preserve historical payment amounts; only new orders use the new cap.
 alter table public.orders add column if not exists legacy_pricing boolean not null default false;

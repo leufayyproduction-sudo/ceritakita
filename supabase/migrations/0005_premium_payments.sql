@@ -19,7 +19,7 @@ alter table public.orders add constraint orders_unique_code_check check (unique_
 create index if not exists orders_user_created_idx on public.orders(user_id,created_at desc);
 
 insert into public.plans(slug,name,price_idr,period,features,is_active) values
-('gratis','Gratis',0,'free',array['Cerita anonim','Mood harian','Jurnal privat','Edukasi publik'],true),
+('gratis','Gratis',0,'free',array['Cerita anonim','Mood harian','Jurnal privat','Edukasi publik'],false),
 ('bulanan','Bulanan',49000,'monthly',array['Semua fitur Gratis','Akses Premium selama 1 bulan'],true),
 ('tahunan','Tahunan',399000,'yearly',array['Semua fitur Gratis','Akses Premium selama 1 tahun'],true)
 on conflict (slug) do nothing;

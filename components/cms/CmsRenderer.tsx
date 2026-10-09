@@ -1,3 +1,5 @@
+import ReviewBoard from "@/components/ReviewBoard";
+import type {ReviewPageData} from "@/app/app/review/types";
 import SponsorCards from "@/components/SponsorCards";
 import type {Sponsor} from "@/lib/sponsors-schema";
 import Link from "next/link";
@@ -10,7 +12,7 @@ import type {SiteSettings} from "@/lib/site-settings-schema";
 import type {PageBlock,CmsPlan,CmsReview} from "@/lib/cms";
 const tint=["bg-peach","bg-blush","bg-lilac","bg-sage"];
 const featureColors=["from-peach to-blush","from-sage to-lilac","from-lilac to-blush","from-blush to-peach"];
-export type CmsContext={settings:SiteSettings;plans:CmsPlan[];reviews:CmsReview[];sponsors?:Sponsor[];preview?:boolean};
+export type CmsContext={settings:SiteSettings;plans:CmsPlan[];reviews:CmsReview[];sponsors?:Sponsor[];preview?:boolean;customerReviews?:ReviewPageData};
 export function CmsBlock({block,context,primary=true}:{block:PageBlock;context:CmsContext;primary?:boolean}){
  const {settings,plans,reviews}=context;
  const chips=block.useSiteChips?settings.chips:block.items.map(item=>item.title).filter(Boolean);
@@ -52,8 +54,8 @@ export function CmsBlock({block,context,primary=true}:{block:PageBlock;context:C
       </Reveal>);
  if(block.type==="pricing")return (<Reveal id={primary?"harga":`harga-${block.id}`} className="px-5 py-10 sm:px-10 lg:px-14">
         <p className="text-xs tracking-widest text-purple-800">{block.eyebrow}</p><h2 className="mb-7 mt-3 text-3xl font-medium">{block.title}</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{plans.map(plan=><article key={plan.id} className="feature-card flex flex-col rounded-[32px] bg-lilac/60 p-5">{plan.is_highlighted&&<span className="mb-3 self-start rounded-full bg-white px-3 py-1 text-[10px] text-purple-800">Pilihan unggulan</span>}<h3 className="text-xl">{plan.name}</h3><p className="mt-4 text-2xl font-semibold text-purple-800">{new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(plan.price_idr))}</p><p className="text-xs text-muted">{plan.period==="monthly"?"per bulan":plan.period==="yearly"?"per tahun":"tanpa biaya"}</p><ul className="my-5 space-y-2 text-xs leading-relaxed text-muted">{(Array.isArray(plan.features)?plan.features:[]).filter((f:unknown):f is string=>typeof f==="string").map((f:string)=><li key={f}>✓ {f}</li>)}</ul><Link href="/app/premium" className="btn btn-brand mt-auto justify-center !px-4 text-xs">Pilih {plan.name} →</Link></article>)}</div>
-        {!plans.length&&<p className="text-sm text-muted">Pilihan paket belum tersedia. Coba lagi sebentar, ya.</p>}
+        <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))]">{plans.filter(plan=>plan.price_idr>0&&["monthly","yearly"].includes(plan.period)).map(plan=><article key={plan.id} className="feature-card flex flex-col rounded-[32px] bg-lilac/60 p-5">{plan.is_highlighted&&<span className="mb-3 self-start rounded-full bg-white px-3 py-1 text-[10px] text-purple-800">Pilihan unggulan</span>}<h3 className="text-xl">{plan.name}</h3><p className="mt-4 text-2xl font-semibold text-purple-800">{new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",maximumFractionDigits:0}).format(Number(plan.price_idr))}</p><p className="text-xs text-muted">{plan.period==="yearly"?"per tahun":"per bulan"}</p><ul className="my-5 space-y-2 text-xs leading-relaxed text-muted">{(Array.isArray(plan.features)?plan.features:[]).filter((f:unknown):f is string=>typeof f==="string").map((f:string)=><li key={f}>✓ {f}</li>)}</ul><Link href="/app/premium" className="btn btn-brand mt-auto justify-center !px-4 text-xs">Pilih {plan.name} →</Link></article>)}</div>
+        {!plans.some(plan=>plan.price_idr>0&&["monthly","yearly"].includes(plan.period))&&<p className="text-sm text-muted">Pilihan paket belum tersedia. Coba lagi sebentar, ya.</p>}
       </Reveal>);
  if(block.type==="testimonials")return (<Reveal id={primary?"review":`review-${block.id}`} className="my-8 overflow-hidden rounded-[40px] bg-lilac py-12 sm:rounded-[56px] sm:py-16">
         <p className="text-center text-xs tracking-[.15em] text-purple-800">{block.eyebrow}</p>
@@ -95,6 +97,7 @@ export default function CmsLayout({blocks,context,home=true}:{blocks:PageBlock[]
         </nav>
 {firstHero&&<CmsBlock block={blocks[0]} context={context}/>}</div>
  {blocks.slice(firstHero?1:0).map(block=>block.type==="hero"?<div key={block.id} className="bg-gradient-to-b from-lilac/60 via-blush/20 to-white px-5 sm:px-10 lg:px-14"><CmsBlock block={block} context={context} primary={blocks.find(b=>b.type===block.type)?.id===block.id}/></div>:<CmsBlock key={block.id} block={block} context={context} primary={blocks.find(b=>b.type===block.type)?.id===block.id}/>)}
+      {home&&context.customerReviews&&!context.preview&&<div className="px-5 py-8 sm:px-10 lg:px-14"><ReviewBoard initial={context.customerReviews} authenticated={false}/></div>}
       {home&&<SponsorCards sponsors={context.sponsors??[]} track={!context.preview}/>}
       <footer className="px-6 pt-10 text-center text-xs text-muted"><Link href="/" className="inline-flex max-w-full items-center gap-2 text-lg font-semibold text-purple-800"><Image src={settings.logoUrl} unoptimized alt="" width={40} height={40} className="h-10 w-10 shrink-0 object-contain" /><span className="truncate" title={settings.name}>{settings.name}</span></Link><div className="my-5 flex flex-wrap justify-center gap-6"><a href={home?"#fitur":"/#fitur"}>Fitur</a><a href={home?"#tentang":"/#tentang"}>Tentang</a><Link href="/review">Ulasan</Link><Link href="/kontak">Kontak</Link></div><p className="break-words leading-relaxed">© {new Date().getFullYear()} {settings.name}. {settings.footerText}</p>{settings.contactEmail&&<a className="mt-4 inline-block break-all underline" href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a>}{settings.socials.length>0&&<div className="mt-4 flex flex-wrap justify-center gap-4">{settings.socials.map((social,index)=><a key={index} href={social.url} target="_blank" rel="noopener noreferrer" className="underline">{social.label}</a>)}</div>}<div className="mx-auto mt-6 max-w-xl rounded-[24px] bg-peach/70 p-5 text-left"><p className="font-medium text-purple-800">Bantuan saat kamu membutuhkan</p><p className="mt-2 break-words leading-relaxed">{settings.emergencyText}</p>{settings.emergencyContacts.map((contact,index)=><a key={index} href={contact.url} className="mt-3 block font-medium text-purple-800 underline">{contact.label}{contact.phone?` · ${contact.phone}`:""}</a>)}</div></footer>
 </main>;
